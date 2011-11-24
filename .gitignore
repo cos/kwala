@@ -1,2 +1,5 @@
 .k/
 kwala-compiled.maude
+*.class
+.settings
+.DS_Store
