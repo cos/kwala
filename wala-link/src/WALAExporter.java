@@ -1,10 +1,13 @@
 import java.io.IOException;
+import java.util.Iterator;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ssa.IR;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSACFG;
+import com.ibm.wala.ssa.SSACFG.BasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.util.CancelException;
 
@@ -21,11 +24,23 @@ public class WALAExporter {
 			CGNode entry = cg.getEntrypointNodes().iterator().next();
 			System.out.println("\n\n");
 			IR ir = entry.getIR();
-			for(SSAInstruction i: ir.getInstructions())
-				System.out.println(i + ";");
-			
 			SSACFG cfg = ir.getControlFlowGraph();
-			System.out.println(cfg);
+			for(ISSABasicBlock bb: cfg) {
+				System.out.println("BB"+bb.getNumber()+": {");
+				for(SSAInstruction i: bb)
+					System.out.println(i + ";");
+				System.out.println("}");
+			}
+			System.out.println(entry.getMethod().getClass());
+			for(ISSABasicBlock bb: cfg) 
+			{
+				Iterator<ISSABasicBlock> succNodes = cfg.getSuccNodes(bb);
+				while (succNodes.hasNext()) {
+					ISSABasicBlock sbb = (ISSABasicBlock) succNodes
+							.next();					
+					System.out.println("BB"+bb.getNumber()+"->"+"BB"+sbb.getNumber());
+				}
+			}
 		} catch (ClassHierarchyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
