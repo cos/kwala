@@ -1,15 +1,22 @@
 module KWALA-SYNTAX
 /*@ \section{Syntax}
 ...*/
- syntax Variable ::= #Int		
+ syntax #Id ::= object
+		| null
+	//convert class names to start with lower case or '
 
- syntax TypeNameBase ::= #Id				
-			| #Id "/" TypeNameBase				[:prec(33):]
- syntax TypeName ::= "L" TypeNameBase						[:prec(33):]
-			| "A" TypeNameBase
+ syntax Variable ::= #Int		
+ syntax VariableName ::= "v" #Int						[:prec(20):]
+
+ syntax Selector ::= "<" "init" ">" "(" ")" "V"					[:prec(40):]
+ syntax TypeName ::= #Id				
+			| #Id "/" TypeName					[:prec(33):]
+// syntax TypeName ::= "L" TypeNameBase						[:prec(33):]
+//			| "A" TypeNameBase
 	//put A instead of [
  syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(40):]
  syntax FieldReference ::= "<" #Id "," TypeName "," #Id "," TypeReference ">"	[:prec(50):]
+ syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"		[:prec(50):]
 
  syntax Params ::= List{Variable,","}
 	//put , instead of space
@@ -17,18 +24,46 @@ module KWALA-SYNTAX
  syntax NewInstruction ::= NewInstructionBase 					[:prec(70):]
 			| NewInstructionBase "(" Params ")" 			[:prec(70):]
  syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 	[:prec(70):]
+// meaning: Var1 = gf F Var2 <=> Var1 = Var2 . F
 			| Variable "=" "getstatic" FieldReference		[:prec(70):]
  syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference	[:prec(70):]
+// meaning: pf Var1 = Var2 F <=> Var1 . F = Var2
 			| "putstatic" Variable FieldReference			[:prec(70):]
  syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 			[:prec(70):]
+ syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 		[:prec(70):]
 	//put param list in ()
+// syntax InvokeSpecialWord ::= "invokespecial"  
+//				| "invokestatic"
+ syntax InvokeSpecialInstruction ::= "invokespecial" MethodReference Params "@" #Int "exception" ":" Variable	[:prec(70):]
 
  syntax Instruction ::= NewInstruction
 			| GetInstruction
 			| PutInstruction
 			| PhiInstruction
+			| PhiPhiInstruction
+			| "return"
+			| InvokeSpecialInstruction
+			| "noinstruction"
+			| "main"
 
- syntax Statement ::= Instruction ";"	[:prec(100):]
+
+ syntax BBEdge ::= #Id "->" #Id ";"						[:prec(70):]
+ 
+// syntax BlockBody ::= List{Instruction,";"}					[:prec(80):]
+ syntax BlockBody ::= Instruction
+			| BlockBody ";" BlockBody 				[:prec(80):]
+ syntax Block ::= #Id ":" "{" BlockBody	"}"					[:prec(90):]
+ 		| #Id ":" "{" "}"						[:prec(90):]
+
+ syntax TaskUnit ::= BBEdge
+		| Block
+		| "start"
+		| "analysis"
+
+ syntax Task ::= TaskUnit
+		| Task  Task							[:prec(100):]
+// syntax Task ::= List{TaskUnit,";"}						[:prec(100):] 
+
 end module
 
 
@@ -39,90 +74,137 @@ module KWALA
 
 /*@ \subsection{Configuration}
 ...*/
-configuration <T color="gray">
-		<k color="red"> $PGM:K </k>
-		</T>
-
-// configuration <T color="gray">
-//		<class multiplicity="*" color="white"> 	
-//		  <className color="cyan"> Object </className>
-//		  <method multiplicity="*" color="yellow">
-//			<methodName color="red"> main </methodName>
-//			<edges color="orange"> .Map </edge>
-//			<basicBlock multiplicity="*" color="brown">
-//				<blockName color="gray"> null </blockName>
-//				<block color="white"> .List </block>
-//			</basicBlock>
-//		  </method>
-//		 </class>
-//		 <heapAbstraction color="yellow">.Map</heapAbstraction>
-//		 <task color="violet"> 
-//			<k color="white"> $PGM:K </k>
-//		 </task>
+//configuration <T color="gray">
+//		<k color="red"> $PGM:K </k>
 //		</T>
 
+ configuration <T color="gray">
+		<class multiplicity="*" color="white"> 	
+		  <className color="cyan"> object </className>
+		  <method multiplicity="*" color="yellow">
+			  <methodName color="red"> null </methodName>
+			  <edges color="orange"> .List </edges>
+			  <basicBlocks color="yellow">
+		  	   <basicBlock multiplicity="*" color="brown">
+				<blockName color="gray"> null </blockName>
+				<block color="white"> noinstruction </block>				
+			   </basicBlock>
+			  </basicBlocks>
+		  </method>
+		 </class>
+		<objects color="LightBlue"> 
+		 <object multiplicity="*">
+			<name> 0 </name>
+			<fields color="red"> .Map </fields>
+		 </object>
+		</objects>
+		<invocations color="blue">
+		 <invocation multiplicity="*"  color="brown">
+			<variables color="red" > .Map </variables>
+			<k color="white"> 
+			  <basicBlocks color="yellow">
+		 	   <basicBlock multiplicity="*" color="brown">
+				<blockName color="gray"> null </blockName>
+				<block color="white"> noinstruction </block>				
+			   </basicBlock>
+			  </basicBlocks>
+			</k>
+		 </invocation>
+		</invocations>
+		<nextPointer> 0 </nextPointer>
+		<nextObject> 0 </nextObject>
+		<constraints>
+		 <pointsTo color="green"> .Map </pointsTo>
+		 <copy color="orange"> .Map </copy>
+		 <fieldRead color="yellow"> .Map </fieldRead>
+		 <fieldWrite color="white"> .Map </fieldWrite>
+		</constraints>
+		<object multiplicity="*">
+		 <name color="green"> 0 </name>
+		 <fields color="yellow"> .Map </fields>
+		</object>
+		 <task color="violet"> 
+			<ik color="white"> $PGM:K </ik>
+		 </task>
+		</T>
 
 
+/*@ \subsection{Processing Basic Blocks}
+...*/
+ rule T1:TaskUnit T2:Task => T1 ~> T2
+ rule I1:Instruction ; BBl2:BlockBody => I1 ~> BBl2
 
-/*@ \subsection{Results}
+ syntax ListItem ::= "[" #Id "," #Id "]"
+ rule <ik> BB1:#Id -> BB2:#Id ; => . ...</ik>
+      <edges> . => [BB1,BB2] ...</edges>
+ 
+ rule <ik> BB:#Id : { Bl:BlockBody }  => . ...</ik>
+	<method> (. =>  <basicBlock> <blockName> BB </blockName> <block> Bl </block></basicBlock>) ...</method>
+ rule <ik> BB:#Id : { }  => . ...</ik>
+	<method> (. =>  <basicBlock> <blockName> BB </blockName> <block> noinstruction </block></basicBlock>) ...</method>
+
+ rule <ik> start => . ...</ik>
+	( . => <class> <className> "blah" </className> <method> <methodName> "blahah" </methodName> <edges> .List </edges> 
+	 <basicBlocks> .Bag </basicBlocks>
+	 </method> </class>)
+
+ rule <ik> . => analysis </ik>
+	<basicBlocks> BBls:Bag </basicBlocks>
+	( . => <invocation> <variables> .Map </variables> <basicBlocks> BBls </basicBlocks> </invocation>)
+
+/*@ \subsection{Gathering Constraints}
 ...*/
 
-//  syntax KResult ::= #Int | #Bool
+//@ Phi functions
 
-/*@ \subsection{Arithmetic Expressions}
-...*/
+ syntax LstValue ::= "listWrapper" "(" List ")"
 
-/*@ \subsubsection{Variable Lookup}
-...*/
+ rule <invocation>... 
+	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
+	<variables> . => v V1 |-> NP  ...</variables>
+	...</invocation>
+	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+	<copy> . => NP |-> listWrapper ( .List ) ... </copy>
 
-//  rule <k> X:#Id => I ...</k> <state>... X |-> I ...</state>
+ rule <invocation>... 
+	<block>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</block>
+	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
+	...</invocation>
+	<copy>... P1 |-> listWrapper( ( . => ListItem ( P2 ) ) _:List) ...</copy>
 
-/*@ \subsubsection{Arithmetic operators}
-...*/
+ rule <invocation>... 
+	<block>  V1 =phi( ) =>  . ...</block>
+	...</invocation>
 
-//  rule I1:#Int + I2:#Int => I1 +Int I2
-//  rule I1 / I2 => I1 /Int I2  if I2 =/=Bool 0 
+//@ Get field
+ 
+ syntax ListItem ::= "(" FieldReference "|>" #Int ")"
 
-/*@ \subsection{Boolean Expressions}
-...*/
+ rule <invocation>... 
+	<block>   V1 = getfield F:FieldReference V2 =>  . ...</block>
+	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
+	...</invocation>
+	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+	<fieldWrite> . => P2 |-> listWrapper ( F |> NP ) ... </fieldWrite>
 
-//  rule I1 <= I2 => I1 <=Int I2
-//  rule not(T:#Bool) => notBool T  
-//  rule true and B:BExp => B  
-//  rule false and _ => false
+//@ Put field 
 
-/*@ \subsection{Statements}
-...*/
+ rule <invocation>... 
+	<block>   putfield V1 = V2 F =>  . ...</block>
+	<variables> ... v V1 |-> P1  _:Map v V2 |-> P2 ...</variables>
+	...</invocation>
+	<fieldRead> . => P1 |-> listWrapper ( F |> P2 ) ... </fieldRead>
 
-/*@ \subsubsection{Skip}
-...*/
+//@ New instruction
+ rule <invocation>... 
+	<block>   V1 = new TR:TypeReference @ _:#Int =>  . ...</block>
+	<variables>  ( . => v V1 |-> NP ) ...</variables>
+	...</invocation>
+	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+	<nextObject> NO:#Int => NO +Int 1 </nextObject>
+	<pointsTo> . => NP |-> listWrapper ( ListItem ( NO ) ) ...</pointsTo>
+	(. => <object> <name> NO </name> <fields> .Map </fields> </object>)
 
-//  rule skip => .
 
-/*@ \subsubsection{Assignment}
-...*/
 
-//  rule <k> X:=I:#Int => . ...</k> <state>... X |-> (_ => I) ...</state>
-
-/*@ \subsubsection{Sequential Composition}
-...*/
-
-//  rule S1:Stmt ; S2:Stmt => S1 ~> S2
-
-/*@ \subsubsection{Conditional}
-...*/
-
-//  rule if true then S:Stmt else _ => S
-//  rule if false then _ else S => S
-
-/*@ \subsubsection{While Loop}
-...*/
-
-//  rule <k> while B do S => if B then (S ; while B do S) else skip ...</k> [:structural:]
-
-/*@ \subsection{Programs}
-...*/
-
-//  rule <k> var ; S => S ...</k>
-//  rule <k> var (X,Xl:Ids => Xl); _ ...</k> <state>... . => X |-> 0 ...</state> 
 end module

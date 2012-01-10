@@ -1,3 +1,10 @@
+.k/
+kwala-compiled.maude
 *.class
 .settings
 .DS_Store
+.kwala.k.swp
+Makefile~
+kwala.k~
+/subjects/particles.kwala~
+

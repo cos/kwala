@@ -1,39 +1,26 @@
-<Application,Lparticles/Particle>
-< Application, Lparticles/Particle, <init>()V >
+start
+
+
 BB0: {
 }
 BB1: {
-invokespecial < Application, Ljava/lang/Object, <init>()V > 1 @1 exception:3;
+3 = new <Application,Lparticles/Particle>@0
 }
 BB2: {
-return;
+invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4
 }
 BB3: {
-}
-BB0->BB1;
-BB1->BB2;
-BB1->BB3;
-BB2->BB3;
-< Application, Lparticles/Particle, foo()V >
-BB0: {
-}
-BB1: {
-3 = new <Application,Lparticles/Particle>@0;
-}
-BB2: {
-invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4;
-}
-BB3: {
-5 = new <Application,Lparticles/Particle>@8;
+5 = new <Application,Lparticles/Particle>@8
 }
 BB4: {
-invokespecial < Application, Lparticles/Particle, <init>()V > 5 @12 exception:6;
+invokespecial < Application, Lparticles/Particle, <init>()V > 5 @12 exception:6
 }
 BB5: {
 putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >;
+putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >
 }
 BB6: {
-return;
+return
 }
 BB7: {
 }
