@@ -14,23 +14,23 @@ module KWALA-SYNTAX
 // syntax TypeName ::= "L" TypeNameBase						[:prec(33):]
 //			| "A" TypeNameBase
 	//put A instead of [
- syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(40):]
+ syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(41):]
  syntax FieldReference ::= "<" #Id "," TypeName "," #Id "," TypeReference ">"	[:prec(50):]
- syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"		[:prec(50):]
+ syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"		[:prec(51):]
 
  syntax Params ::= List{Variable,","}
 	//put , instead of space
  syntax NewInstructionBase ::= Variable "=" "new" TypeReference "@" #Int 	[:prec(70):]
- syntax NewInstruction ::= NewInstructionBase 					[:prec(70):]
-			| NewInstructionBase "(" Params ")" 			[:prec(70):]
- syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 	[:prec(70):]
+ syntax NewInstruction ::= NewInstructionBase 					[:prec(71):]
+			| NewInstructionBase "(" Params ")" 			[:prec(72):]
+ syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 	[:prec(73):]
 // meaning: Var1 = gf F Var2 <=> Var1 = Var2 . F
-			| Variable "=" "getstatic" FieldReference		[:prec(70):]
- syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference	[:prec(70):]
+			| Variable "=" "getstatic" FieldReference		[:prec(74):]
+ syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference	[:prec(75):]
 // meaning: pf Var1 = Var2 F <=> Var1 . F = Var2
-			| "putstatic" Variable FieldReference			[:prec(70):]
- syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 			[:prec(70):]
- syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 		[:prec(70):]
+			| "putstatic" Variable FieldReference			[:prec(76):]
+ syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 			[:prec(77):]
+ syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 		[:prec(78):]
 	//put param list in ()
 // syntax InvokeSpecialWord ::= "invokespecial"  
 //				| "invokestatic"
@@ -47,13 +47,13 @@ module KWALA-SYNTAX
 			| "main"
 
 
- syntax BBEdge ::= #Id "->" #Id ";"						[:prec(70):]
+ syntax BBEdge ::= #Id "->" #Id ";"						[:prec(79):]
  
  syntax BlockBody ::= List{Instruction,";"}					[:prec(80):]
-// syntax BlockBody ::= Instruction
-//			| BlockBody ";" BlockBody 				[:prec(80):]
+
+
  syntax Block ::= #Id ":" "{" BlockBody	"}"					[:prec(90):]
-// 		| #Id ":" "{" "}"						[:prec(90):]
+
 
  syntax TaskUnit ::= BBEdge
 		| Block
@@ -61,8 +61,8 @@ module KWALA-SYNTAX
 		| "analysis"
 
  syntax Task ::= TaskUnit
-		| Task  Task							[:prec(100):]
-// syntax Task ::= List{TaskUnit,";"}						[:prec(100):] 
+		| Task Task							[:prec(100) gather(E e):]
+
 
 end module
 
@@ -74,9 +74,9 @@ module KWALA
 
 /*@ \subsection{Configuration}
 ...*/
-//configuration <T color="gray">
-//		<k color="red"> $PGM:K </k>
-//		</T>
+
+
+
 
  configuration <T color="gray">
 		<class multiplicity="*" color="white"> 	
@@ -129,7 +129,9 @@ module KWALA
 /*@ \subsection{Processing Basic Blocks}
 ...*/
  rule T1:TaskUnit T2:Task => T1 ~> T2
+// rule I1:Instruction ; I2:Instruction ; BBl2:BlockBody => I1 ~> I2 ~> BBl2
  rule I1:Instruction ; BBl2:BlockBody => I1 ~> BBl2
+
 
  syntax ListItem ::= "[" #Id "," #Id "]"
  rule <ik> BB1:#Id -> BB2:#Id ; => . ...</ik>
@@ -157,26 +159,8 @@ module KWALA
  syntax RelList ::= List{RelElement,","}
  syntax K ::= RelList
 
-//syntax LstValue ::= "listWrapper" "(" List ")"
-
 //@ Phi functions
 
-// rule <invocation>... 
-//	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
-//	<variables> . => v V1 |-> NP  ...</variables>
-//	...</invocation>
-//	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-//	<copy> . => NP |-> listWrapper ( .List ) ... </copy>
-
-// rule <invocation>... 
-//	<block>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</block>
-//	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
-//	...</invocation>
-//	<copy>... P1 |-> listWrapper( ( . => ListItem ( P2 ) ) _:List) ...</copy>
-
-// rule <invocation>... 
-//	<block>  V1 =phi( ) =>  . ...</block>
-//	...</invocation>
  rule <invocation>... 
 	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
 	<variables> . => v V1 |-> NP  ...</variables>
@@ -197,17 +181,6 @@ module KWALA
 
 
 //@ Get field
- 
-// syntax RelElement ::=  "(" FieldReference "|>" #Int ")"
-// syntax RelList ::= List{RelElement,","}
-// syntax ListItem ::= "(" FieldReference "|>" #Int ")"
-
-// rule <invocation>... 
-//	<block>   V1:#Int = getfield F:FieldReference V2:#Int =>  . ...</block>
-//	<variables> ( . => v V1 |-> NP:#Int ) _:Map v V2 |-> P2:#Int ...</variables>
-//	...</invocation>
-//	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-//	<fieldWrite> . => P2 |-> listWrapper ( F |> NP ) ... </fieldWrite>
 
  rule <invocation>... 
 	<block>   V1:#Int = getfield F:FieldReference V2:#Int =>  . ...</block>
@@ -216,14 +189,7 @@ module KWALA
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
 	<fieldWrite> ( . => P2 |-> ( F |> NP ),.RelList ) ... </fieldWrite>
 
-
 //@ Put field 
-
-// rule <invocation>... 
-//      <block>   putfield V1:#Int = V2:#Int F:FieldReference =>  . ...</block>
-//      <variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
-//      ...</invocation>
-//      <fieldRead> . => P1 |-> listWrapper ( F |> P2 ) ... </fieldRead>
 
  rule <invocation>... 
 	<block>   putfield V1:#Int = V2:#Int F:FieldReference =>  . ...</block>
@@ -232,14 +198,6 @@ module KWALA
 	<fieldRead> ( . => P1 |-> ( F |> P2 ),.RelList ) ... </fieldRead>
 
 //@ New instruction
-// rule <invocation>... 
-//	<block>   V1 = new TR:TypeReference @ _:#Int =>  . ...</block>
-//	<variables>  ( . => v V1 |-> NP ) ...</variables>
-//	...</invocation>
-//	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-//	<nextObject> NO:#Int => NO +Int 1 </nextObject>
-//	<pointsTo> . => NP |-> listWrapper ( ListItem ( NO ) ) ...</pointsTo>
-//	(. => <object> <name> NO </name> <fields> .Map </fields> </object>)
 
  rule <invocation>... 
 	<block>   V1 = new TR:TypeReference @ _:#Int =>  . ...</block>
@@ -249,7 +207,6 @@ module KWALA
 	<nextObject> NO:#Int => NO +Int 1 </nextObject>
 	<pointsTo> ( . => NP |-> ( (| NO |),.RelList ) ) ...</pointsTo>
 	(. => <object> <name> NO </name> <fields> .Map </fields> </object>)
-
 
 end module
 
