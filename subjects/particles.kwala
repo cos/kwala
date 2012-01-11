@@ -20,7 +20,7 @@ invokespecial < Application, Lparticles/Particle, <init>()V > 5 @12 exception:6
 }
 BB5: {
 putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >;
-putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >
+6 = getfield < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> > 3
 }
 BB6: {
 return

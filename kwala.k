@@ -195,7 +195,15 @@ module KWALA
 	<block>   putfield V1:#Int = V2:#Int F:FieldReference =>  . ...</block>
 	<variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
-	<fieldRead> ( . => P1 |-> ( F |> P2 ),.RelList ) ... </fieldRead>
+	<fieldRead> ( . => P1 |-> ( F |> P2 ),.RelList ) Rest:Map </fieldRead>
+	when notBool(P1 in keys(Rest))
+
+ rule <invocation>... 
+	<block>   putfield V1:#Int = V2:#Int F:FieldReference =>  . ...</block>
+	<variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
+	...</invocation>
+	<fieldRead>... P1 |-> ( RL1 => ( F |> P2 ),RL1 ) ...</fieldRead>
+
 
 //@ New instruction
 
