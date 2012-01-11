@@ -92,6 +92,7 @@ module KWALA
 			  </basicBlocks>
 		  </method>
 		 </class>
+    @latex("\\kBR")
 
 		<invocations color="blue">
 		 <invocation multiplicity="*"  color="brown">
@@ -106,9 +107,12 @@ module KWALA
 			</k>
 		 </invocation>
 		</invocations>
+    @latex("\\kBR")
 
 		<nextPointer> 0 </nextPointer>
 		<nextObject> 0 </nextObject>
+
+    @latex("\\kBR")
 
 		<constraints>
 		 <pointsTo color="green"> .Map </pointsTo>
