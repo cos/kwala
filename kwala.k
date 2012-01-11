@@ -49,11 +49,11 @@ module KWALA-SYNTAX
 
  syntax BBEdge ::= #Id "->" #Id ";"						[:prec(70):]
  
-// syntax BlockBody ::= List{Instruction,";"}					[:prec(80):]
- syntax BlockBody ::= Instruction
-			| BlockBody ";" BlockBody 				[:prec(80):]
+ syntax BlockBody ::= List{Instruction,";"}					[:prec(80):]
+// syntax BlockBody ::= Instruction
+//			| BlockBody ";" BlockBody 				[:prec(80):]
  syntax Block ::= #Id ":" "{" BlockBody	"}"					[:prec(90):]
- 		| #Id ":" "{" "}"						[:prec(90):]
+// 		| #Id ":" "{" "}"						[:prec(90):]
 
  syntax TaskUnit ::= BBEdge
 		| Block
@@ -92,12 +92,7 @@ module KWALA
 			  </basicBlocks>
 		  </method>
 		 </class>
-		<objects color="LightBlue"> 
-		 <object multiplicity="*">
-			<name> 0 </name>
-			<fields color="red"> .Map </fields>
-		 </object>
-		</objects>
+
 		<invocations color="blue">
 		 <invocation multiplicity="*"  color="brown">
 			<variables color="red" > .Map </variables>
@@ -111,8 +106,10 @@ module KWALA
 			</k>
 		 </invocation>
 		</invocations>
+
 		<nextPointer> 0 </nextPointer>
 		<nextObject> 0 </nextObject>
+
 		<constraints>
 		 <pointsTo color="green"> .Map </pointsTo>
 		 <copy color="orange"> .Map </copy>
@@ -150,61 +147,113 @@ module KWALA
 
  rule <ik> . => analysis </ik>
 	<basicBlocks> BBls:Bag </basicBlocks>
-	( . => <invocation> <variables> .Map </variables> <basicBlocks> BBls </basicBlocks> </invocation>)
+	( . => <invocation> <variables> .Map </variables> <k> <basicBlocks> BBls </basicBlocks> </k> </invocation>)
 
 /*@ \subsection{Gathering Constraints}
 ...*/
 
+ syntax RelElement ::=  "(" FieldReference "|>" #Int ")"
+	| "(|" #Int "|)"
+ syntax RelList ::= List{RelElement,","}
+ syntax K ::= RelList
+
+//syntax LstValue ::= "listWrapper" "(" List ")"
+
 //@ Phi functions
 
- syntax LstValue ::= "listWrapper" "(" List ")"
+// rule <invocation>... 
+//	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
+//	<variables> . => v V1 |-> NP  ...</variables>
+//	...</invocation>
+//	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+//	<copy> . => NP |-> listWrapper ( .List ) ... </copy>
 
+// rule <invocation>... 
+//	<block>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</block>
+//	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
+//	...</invocation>
+//	<copy>... P1 |-> listWrapper( ( . => ListItem ( P2 ) ) _:List) ...</copy>
+
+// rule <invocation>... 
+//	<block>  V1 =phi( ) =>  . ...</block>
+//	...</invocation>
  rule <invocation>... 
 	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
 	<variables> . => v V1 |-> NP  ...</variables>
 	...</invocation>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-	<copy> . => NP |-> listWrapper ( .List ) ... </copy>
+	<copy> . => NP |-> .RelList ... </copy>
 
  rule <invocation>... 
 	<block>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</block>
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
-	<copy>... P1 |-> listWrapper( ( . => ListItem ( P2 ) ) _:List) ...</copy>
+	<copy>... P1 |-> ( RL1:RelList => (| P2 |),RL1 ) ...</copy>
+
 
  rule <invocation>... 
 	<block>  V1 =phi( ) =>  . ...</block>
 	...</invocation>
 
+
 //@ Get field
  
- syntax ListItem ::= "(" FieldReference "|>" #Int ")"
+// syntax RelElement ::=  "(" FieldReference "|>" #Int ")"
+// syntax RelList ::= List{RelElement,","}
+// syntax ListItem ::= "(" FieldReference "|>" #Int ")"
+
+// rule <invocation>... 
+//	<block>   V1:#Int = getfield F:FieldReference V2:#Int =>  . ...</block>
+//	<variables> ( . => v V1 |-> NP:#Int ) _:Map v V2 |-> P2:#Int ...</variables>
+//	...</invocation>
+//	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+//	<fieldWrite> . => P2 |-> listWrapper ( F |> NP ) ... </fieldWrite>
 
  rule <invocation>... 
-	<block>   V1 = getfield F:FieldReference V2 =>  . ...</block>
-	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
+	<block>   V1:#Int = getfield F:FieldReference V2:#Int =>  . ...</block>
+	<variables> ( . => v V1 |-> NP:#Int ) _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-	<fieldWrite> . => P2 |-> listWrapper ( F |> NP ) ... </fieldWrite>
+	<fieldWrite> ( . => P2 |-> ( F |> NP ),.RelList ) ... </fieldWrite>
+
 
 //@ Put field 
 
+// rule <invocation>... 
+//      <block>   putfield V1:#Int = V2:#Int F:FieldReference =>  . ...</block>
+//      <variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
+//      ...</invocation>
+//      <fieldRead> . => P1 |-> listWrapper ( F |> P2 ) ... </fieldRead>
+
  rule <invocation>... 
-	<block>   putfield V1 = V2 F =>  . ...</block>
-	<variables> ... v V1 |-> P1  _:Map v V2 |-> P2 ...</variables>
+	<block>   putfield V1:#Int = V2:#Int F:FieldReference =>  . ...</block>
+	<variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
-	<fieldRead> . => P1 |-> listWrapper ( F |> P2 ) ... </fieldRead>
+	<fieldRead> ( . => P1 |-> ( F |> P2 ),.RelList ) ... </fieldRead>
 
 //@ New instruction
+// rule <invocation>... 
+//	<block>   V1 = new TR:TypeReference @ _:#Int =>  . ...</block>
+//	<variables>  ( . => v V1 |-> NP ) ...</variables>
+//	...</invocation>
+//	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+//	<nextObject> NO:#Int => NO +Int 1 </nextObject>
+//	<pointsTo> . => NP |-> listWrapper ( ListItem ( NO ) ) ...</pointsTo>
+//	(. => <object> <name> NO </name> <fields> .Map </fields> </object>)
+
  rule <invocation>... 
 	<block>   V1 = new TR:TypeReference @ _:#Int =>  . ...</block>
 	<variables>  ( . => v V1 |-> NP ) ...</variables>
 	...</invocation>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
 	<nextObject> NO:#Int => NO +Int 1 </nextObject>
-	<pointsTo> . => NP |-> listWrapper ( ListItem ( NO ) ) ...</pointsTo>
+	<pointsTo> ( . => NP |-> ( (| NO |),.RelList ) ) ...</pointsTo>
 	(. => <object> <name> NO </name> <fields> .Map </fields> </object>)
 
 
-
 end module
+
+
+
+
+
