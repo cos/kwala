@@ -168,14 +168,14 @@ module KWALA
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<copy>... P2 |-> wrappedList ( <cenvs> ( . => SetItem ( P1 ) ) RestSet:Set </cenvs> ) ...</copy>
-	if notBool(P1 in RestSet)
+	when notBool(P1 in RestSet)
 
  rule <invocation>... 
 	<block>  V1 =phiphi( V2, P )  =>  V1 = phiphi(P) ...</block>
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<copy> ( . =>  P2 |-> wrappedList ( <cenvs> SetItem( P1 ) </cenvs> ) ) Rest </copy>
-	if notBool(P2 in keys(Rest)) 
+	when notBool(P2 in keys(Rest)) 
 	
 
  rule <invocation>... 
@@ -192,7 +192,7 @@ module KWALA
 	...</invocation>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
 	<fieldRead> ( . => P2 |-> wrappedList ( <cenvs> ( F |> NP ) </cenvs> ) ) Rest </fieldRead>
-	if notBool(P2 in keys(Rest)) 
+	when notBool(P2 in keys(Rest)) 
 
  rule <invocation>... 
 	<block>   V1 = getfield F V2 =>  . ...</block>
@@ -211,7 +211,7 @@ module KWALA
 	<pointsTo>... P1 |->  wrappedList ( <cenvs>... SetItem ( O ) ...</cenvs> ) ...</pointsTo>
 	<object> <name> O </name> <fields> ( . =>  F |-> NP ) ...</fields> </object>
 	<nextPointer> NP => NP +Int 1 </nextPointer>
-	if notBool(P1 in keys(Rest)) 
+	when notBool(P1 in keys(Rest)) 
 
  rule <invocation>... 
 	<block>   putfield V1 = V2 F =>  . ...</block>
@@ -244,14 +244,14 @@ rule <copy>... B |->  wrappedList( <cenvs>... SetItem ( A ) ...</cenvs> ) ...</c
 		_:Map  
 		A |-> wrappedList( <cenvs> ( . => SetItem ( O ) ) OldSet:Set </cenvs> )
 	...</pointsTo>
-	if notBool(O in OldSet)
+	when notBool(O in OldSet)
 
 rule <copy>... B |->  wrappedList( <cenvs>... SetItem ( A ) ...</cenvs> ) ...</copy>
 	<pointsTo> B |->   wrappedList( <cenvs>... SetItem ( O ) ...</cenvs> ) 
 		RestOfTheWorld:Map  
 		( . => A |-> wrappedList( <cenvs> SetItem ( O ) </cenvs> ) )
 	</pointsTo>
-	if notBool(A in keys(RestOfTheWorld))
+	when notBool(A in keys(RestOfTheWorld))
 
 //@ Second type of graph: if field-read and points-to encountered, propagate copy
 rule <copy>... P1 |->   wrappedList( <cenvs> ( . => SetItem ( A:#Int ) ) OldSet:Set </cenvs> ) ...</copy>
@@ -262,7 +262,7 @@ rule <copy>... P1 |->   wrappedList( <cenvs> ( . => SetItem ( A:#Int ) ) OldSet:
 		B |->  wrappedList( <cenvs>... ( F |> A ) ...</cenvs> ) 
 	...</fieldRead>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
-	if notBool(A in OldSet)
+	when notBool(A in OldSet)
 
 rule <copy> ( . => P1 |->   wrappedList( <cenvs> SetItem ( A ) </cenvs> ) ) OldMap:Map </copy>
 	<pointsTo>... 
@@ -272,7 +272,7 @@ rule <copy> ( . => P1 |->   wrappedList( <cenvs> SetItem ( A ) </cenvs> ) ) OldM
 		B |->  wrappedList( <cenvs>... ( F |> A ) ...</cenvs> ) 
 	...</fieldRead>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
-	if notBool(P1 in keys(OldMap))
+	when notBool(P1 in keys(OldMap))
 
 //@ Third type of graph: if field-write and points-to encountered, propagate copy
 rule <copy>... B |->   wrappedList( <cenvs> ( . => SetItem ( P1 ) ) OldSet </cenvs> ) ...</copy>
@@ -283,7 +283,7 @@ rule <copy>... B |->   wrappedList( <cenvs> ( . => SetItem ( P1 ) ) OldSet </cen
 		A |->  wrappedList( <cenvs>... ( F |> B ) ...</cenvs> ) 
 	...</fieldWrite>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
-	if notBool(P1 in OldSet)
+	when notBool(P1 in OldSet)
 
 rule <copy> ( . => B |->   wrappedList( <cenvs> SetItem ( P1 ) </cenvs> ) ) OldMap </copy>
 	<pointsTo>... 
@@ -293,6 +293,6 @@ rule <copy> ( . => B |->   wrappedList( <cenvs> SetItem ( P1 ) </cenvs> ) ) OldM
 		A |->  wrappedList( <cenvs>... ( F |> B ) ...</cenvs> ) 
 	...</fieldWrite>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
-	if notBool(B in keys(OldMap))
+	when notBool(B in keys(OldMap))
 
 end module
