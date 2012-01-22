@@ -14,27 +14,27 @@ module KWALA-SYNTAX
 // syntax TypeName ::= "L" TypeNameBase						[:prec(33):]
 //			| "A" TypeNameBase
 	//put A instead of [
- syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(40):]
+ syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(41):]
  syntax FieldReference ::= "<" #Id "," TypeName "," #Id "," TypeReference ">"	[:prec(50):]
- syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"		[:prec(50):]
+ syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"		[:prec(51):]
 
  syntax Params ::= List{Variable,","}
 	//put , instead of space
  syntax NewInstructionBase ::= Variable "=" "new" TypeReference "@" #Int 	[:prec(70):]
- syntax NewInstruction ::= NewInstructionBase 					[:prec(70):]
-			| NewInstructionBase "(" Params ")" 			[:prec(70):]
- syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 	[:prec(70):]
+ syntax NewInstruction ::= NewInstructionBase 					[:prec(71):]
+			| NewInstructionBase "(" Params ")" 			[:prec(72):]
+ syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 	[:prec(73):]
 // meaning: Var1 = gf F Var2 <=> Var1 = Var2 . F
-			| Variable "=" "getstatic" FieldReference		[:prec(70):]
- syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference	[:prec(70):]
+			| Variable "=" "getstatic" FieldReference		[:prec(74):]
+ syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference	[:prec(75):]
 // meaning: pf Var1 = Var2 F <=> Var1 . F = Var2
-			| "putstatic" Variable FieldReference			[:prec(70):]
- syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 			[:prec(70):]
- syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 		[:prec(70):]
+			| "putstatic" Variable FieldReference			[:prec(76):]
+ syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 			[:prec(77):]
+ syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 		[:prec(78):]
 	//put param list in ()
 // syntax InvokeSpecialWord ::= "invokespecial"  
 //				| "invokestatic"
- syntax InvokeSpecialInstruction ::= "invokespecial" MethodReference Params "@" #Int "exception" ":" Variable	[:prec(70):]
+ syntax InvokeSpecialInstruction ::= "invokespecial" MethodReference Params "@" #Int "exception" ":" Variable	[:prec(79):]
 
  syntax Instruction ::= NewInstruction
 			| GetInstruction
@@ -47,13 +47,13 @@ module KWALA-SYNTAX
 			| "main"
 
 
- syntax BBEdge ::= #Id "->" #Id ";"						[:prec(70):]
+ syntax BBEdge ::= #Id "->" #Id ";"						[:prec(80):]
  
-// syntax BlockBody ::= List{Instruction,";"}					[:prec(80):]
- syntax BlockBody ::= Instruction
-			| BlockBody ";" BlockBody 				[:prec(80):]
+ syntax BlockBody ::= List{Instruction,";"}					[:prec(81):]
+// syntax BlockBody ::= Instruction
+//			| BlockBody ";" BlockBody 				[:prec(80):]
  syntax Block ::= #Id ":" "{" BlockBody	"}"					[:prec(90):]
- 		| #Id ":" "{" "}"						[:prec(90):]
+// 		| #Id ":" "{" "}"						[:prec(90):]
 
  syntax TaskUnit ::= BBEdge
 		| Block
@@ -62,7 +62,7 @@ module KWALA-SYNTAX
 		| "done"
 
  syntax Task ::= TaskUnit
-		| Task  Task							[:prec(100):]
+		| Task  Task							[:prec(100) gather(E e):]
 // syntax Task ::= List{TaskUnit,";"}						[:prec(100):] 
 
 end module
