@@ -93,13 +93,8 @@ module KWALA
 			  </basicBlocks>
 		  </method>
 		 </class>
+		 @latex("\\kBR")
 		<cenvs multiplicity="*"> .Set </cenvs>
-		<objects color="LightBlue"> 
-		 <object multiplicity="*">
-			<name> 0 </name>
-			<fields color="red"> .Map </fields>
-		 </object>
-		</objects>
 		<invocations color="blue">
 		 <invocation multiplicity="*"  color="brown">
 			<variables color="red" > .Map </variables>
@@ -113,16 +108,19 @@ module KWALA
 		</invocations>
 		<nextPointer> 0 </nextPointer>
 		<nextObject> 0 </nextObject>
+		 @latex("\\kBR")
 		<constraints>
 		 <pointsTo color="green"> .Map </pointsTo>
 		 <copy color="orange"> .Map </copy>
 		 <fieldRead color="yellow"> .Map </fieldRead>
 		 <fieldWrite color="white"> .Map </fieldWrite>
 		</constraints>
-		<object multiplicity="*">
-		 <name color="green"> 0 </name>
-		 <fields color="yellow"> .Map </fields>
-		</object>
+		<objects>
+			<object multiplicity="*">
+		 		<name color="green"> 0 </name>
+		 		<fields color="yellow"> .Map </fields>
+			</object>
+		</objects>
 		 <task color="violet"> 
 			<ik color="white"> $PGM:K </ik>
 		 </task>
@@ -155,16 +153,19 @@ module KWALA
 /*@ \subsection{Gathering Constraints}
 ...*/
 
+syntax K ::= "wrappedList" "(" Bag ")"
+// syntax MapVals ::= List{#Int,";;;"}
+
 //@ Phi functions
 
  rule <invocation>... 
-	<block>  V1 =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
+	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
 	<variables> . => v V1 |-> NP  ...</variables>
 	...</invocation>
-	<nextPointer> NP => NP +Int 1 </nextPointer>
+	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
 
  rule <invocation>... 
-	<block>  V1 =phiphi( V2, P )  =>  V1 = phiphi(P) ...</block>
+	<block>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</block>
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<copy>... P2 |-> wrappedList ( <cenvs> ( . => SetItem ( P1 ) ) RestSet:Set </cenvs> ) ...</copy>
@@ -175,7 +176,7 @@ module KWALA
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<copy> ( . =>  P2 |-> wrappedList ( <cenvs> SetItem( P1 ) </cenvs> ) ) Rest </copy>
-	when notBool(P2 in keys(Rest)) 
+	when notBool(P2 in keys(Rest:Map)) 
 	
 
  rule <invocation>... 
@@ -184,47 +185,45 @@ module KWALA
 
 //@ Get field
  
- syntax SetItem ::= "(" FieldReference "|>" #Int ")"
-
- rule <invocation>... 
-	<block>   V1 = getfield F:FieldReference V2 =>  . ...</block>
-	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
-	...</invocation>
-	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-	<fieldRead> ( . => P2 |-> wrappedList ( <cenvs> ( F |> NP ) </cenvs> ) ) Rest </fieldRead>
-	when notBool(P2 in keys(Rest)) 
-
- rule <invocation>... 
-	<block>   V1 = getfield F V2 =>  . ...</block>
-	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
-	...</invocation>
-	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-	<fieldRead>... P2 |-> wrappedList( <cenvs> ( . => ( F |> NP ) ) RestSet </cenvs> ) ...</fieldRead>
+ syntax FieldToPointer ::= "(" FieldReference "|>" #Int ")"
+ // 
+  rule <invocation>... 
+  	<block>   V1 = getfield F:FieldReference V2 =>  . ...</block>
+  	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
+  	...</invocation>
+  	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+  	<fieldRead> ( . => P2 |-> wrappedList ( <cenvs> SetItem( ( F |> NP ) ) </cenvs> ) ) Rest </fieldRead>
+  	when notBool(P2 in keys(Rest)) 
+  
+  rule <invocation>... 
+  	<block>   V1 = getfield F V2 =>  . ...</block>
+  	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
+  	...</invocation>
+  	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+  	<fieldRead>... P2 |-> wrappedList( <cenvs> ( . => SetItem( ( F |> NP ) ) ) RestSet </cenvs> ) ...</fieldRead>
 
 //@ Put field 
 
  rule <invocation>... 
-	<block>   putfield V1 = V2:#Int F =>  . ...</block>
-	<variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
-	...</invocation>
-	<fieldWrite> ( . => P1 |-> wrappedList ( <cenvs> ( F |> P2 ) </cenvs> ) ) Rest:Map </fieldWrite>
-	<pointsTo>... P1 |->  wrappedList ( <cenvs>... SetItem ( O ) ...</cenvs> ) ...</pointsTo>
-	<object> <name> O </name> <fields> ( . =>  F |-> NP ) ...</fields> </object>
-	<nextPointer> NP => NP +Int 1 </nextPointer>
-	when notBool(P1 in keys(Rest)) 
+ 	<block>  (putfield V1 = V2:#Int F:FieldReference =>  .) ...</block>
+ 	<variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
+ 	...</invocation>
+ 	<fieldWrite> ( . => P1 |-> wrappedList ( <cenvs> SetItem( ( F |> P2 ) ) </cenvs> ) ) Rest:Map </fieldWrite>
+ 	<pointsTo>... P1 |->  wrappedList ( <cenvs>... SetItem ( O:#Int) ...</cenvs> ) ...</pointsTo>
+ 	<object> <name> O </name> <fields> ( . =>  F |-> NP ) ...</fields> </object>
+ 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+ 	when notBool(P1 in keys(Rest)) 
 
  rule <invocation>... 
-	<block>   putfield V1 = V2 F =>  . ...</block>
-	<variables> ... v V1 |-> P1  _:Map v V2 |-> P2 ...</variables>
-	...</invocation>
-	<fieldWrite>... P1 |-> wrappedList ( <cenvs> ( . => ( F |> P2 ) ) RestSet </cenvs> ) ...</fieldWrite>
-	<pointsTo>... P1 |->  wrappedList ( <cenvs>... SetItem ( O ) ...</cenvs> ) ...</pointsTo>
-	<object> <name> O </name> <fields> ( . =>  F |-> NP ) ...</fields> </object>
-	<nextPointer> NP => NP +Int 1 </nextPointer>
+   	<block>   putfield V1 = V2 F =>  . ...</block>
+     <variables> ... v V1 |-> P1  _:Map v V2 |-> P2 ...</variables>
+     ...</invocation>
+     <fieldWrite>... P1 |-> wrappedList ( <cenvs> ( . => SetItem(  ( F |> P2 ) ) ) RestSet </cenvs> ) ...</fieldWrite>
+     <pointsTo>... P1 |->  wrappedList ( <cenvs>... SetItem ( O ) ...</cenvs> ) ...</pointsTo>
+     <object> <name> O </name> <fields> ( . =>  F |-> NP ) ...</fields> </object>
+     <nextPointer> NP => NP +Int 1 </nextPointer>
 
 //@ New instruction
- syntax K ::= "wrappedList" "(" Bag ")"
-// syntax MapVals ::= List{#Int,";;;"}
 
  rule <invocation>... 	
 	<block>   V1:#Int = new TR:TypeReference @ _:#Int =>  . ...</block>
@@ -233,7 +232,7 @@ module KWALA
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
 	<nextObject> NO:#Int => NO +Int 1 </nextObject>
 	<pointsTo> . => NP |-> wrappedList ( <cenvs> SetItem ( NO ) </cenvs> ) ...</pointsTo>
-	(. => <object> <name> NO </name> <fields> .Map </fields> </object>)
+	<objects>(. => <object> <name> NO </name> <fields> .Map </fields> </object>) ...</objects>
 
 /*@ \subsection{Resolving Constraints}*/
 
@@ -259,7 +258,7 @@ rule <copy>... P1 |->   wrappedList( <cenvs> ( . => SetItem ( A:#Int ) ) OldSet:
 		B:#Int |->   wrappedList( <cenvs>... SetItem ( O:#Int ) ...</cenvs> ) 
 	...</pointsTo>
 	<fieldRead>... 
-		B |->  wrappedList( <cenvs>... ( F |> A ) ...</cenvs> ) 
+		B |->  wrappedList( <cenvs>... SetItem(  ( F |> A ) )...</cenvs> ) 
 	...</fieldRead>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
 	when notBool(A in OldSet)
@@ -269,7 +268,7 @@ rule <copy> ( . => P1 |->   wrappedList( <cenvs> SetItem ( A ) </cenvs> ) ) OldM
 		B |->   wrappedList( <cenvs>... SetItem ( O ) ...</cenvs> ) 
 	...</pointsTo>
 	<fieldRead>... 
-		B |->  wrappedList( <cenvs>... ( F |> A ) ...</cenvs> ) 
+		B |->  wrappedList( <cenvs>...SetItem(  ( F |> A ) )...</cenvs> ) 
 	...</fieldRead>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
 	when notBool(P1 in keys(OldMap))
@@ -280,7 +279,7 @@ rule <copy>... B |->   wrappedList( <cenvs> ( . => SetItem ( P1 ) ) OldSet </cen
 		A |->   wrappedList( <cenvs>... SetItem ( O ) ...</cenvs> ) 
 	...</pointsTo>
 	<fieldWrite>... 
-		A |->  wrappedList( <cenvs>... ( F |> B ) ...</cenvs> ) 
+		A |->  wrappedList( <cenvs>... SetItem(  ( F |> B ) ) ...</cenvs> ) 
 	...</fieldWrite>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
 	when notBool(P1 in OldSet)
@@ -290,7 +289,7 @@ rule <copy> ( . => B |->   wrappedList( <cenvs> SetItem ( P1 ) </cenvs> ) ) OldM
 		A |->   wrappedList( <cenvs>... SetItem ( O ) ...</cenvs> ) 
 	...</pointsTo>
 	<fieldWrite>... 
-		A |->  wrappedList( <cenvs>... ( F |> B ) ...</cenvs> ) 
+		A |->  wrappedList( <cenvs>... SetItem(  ( F |> B ) ) ...</cenvs> ) 
 	...</fieldWrite>
 	<object> <name> O </name> <fields>... F |-> P1 ...</fields> </object>
 	when notBool(B in keys(OldMap))
