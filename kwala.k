@@ -75,10 +75,6 @@ module KWALA
 
 /*@ \subsection{Configuration}
 ...*/
-//configuration <T color="gray">
-//		<k color="red"> $PGM:K </k>
-//		</T>
-
  configuration <T color="gray">
 		<class multiplicity="*" color="white"> 	
 		  <className color="cyan"> object </className>
@@ -88,7 +84,7 @@ module KWALA
 			  <basicBlocks color="yellow">
 		  	   <basicBlock multiplicity="*" color="brown">
 				<blockName color="gray"> null </blockName>
-				<block color="white"> noinstruction </block>				
+				<k color="white"> noinstruction </k>				
 			   </basicBlock>
 			  </basicBlocks>
 		  </method>
@@ -98,12 +94,12 @@ module KWALA
 		<invocations color="blue">
 		 <invocation multiplicity="*"  color="brown">
 			<variables color="red" > .Map </variables>
-			<k color="white"> 
+			<body color="white"> 
 		 	   <basicBlock multiplicity="*" color="brown">
 				<blockName color="gray"> null </blockName>
-				<block color="white"> noinstruction </block>				
+				<k color="white"> noinstruction </k>				
 			   </basicBlock>
-			</k>
+			</body>
 		 </invocation>
 		</invocations>
 		<nextPointer> 0 </nextPointer>
@@ -137,9 +133,9 @@ module KWALA
       <edges> . => [BB1,BB2] ...</edges>
  
  rule <ik> BB:#Id : { Bl:BlockBody }  => . ...</ik>
-	<method> (. =>  <basicBlock> <blockName> BB </blockName> <block> Bl </block></basicBlock>) ...</method>
+	<method> (. =>  <basicBlock> <blockName> BB </blockName> <k> Bl </k></basicBlock>) ...</method>
  rule <ik> BB:#Id : { }  => . ...</ik>
-	<method> (. =>  <basicBlock> <blockName> BB </blockName> <block> noinstruction </block></basicBlock>) ...</method>
+	<method> (. =>  <basicBlock> <blockName> BB </blockName> <k> noinstruction </k></basicBlock>) ...</method>
 
  rule <ik> start => . ...</ik>
 	( . => <class> <className> "blah" </className> <method> <methodName> "blahah" </methodName> <edges> .List </edges> 
@@ -148,7 +144,7 @@ module KWALA
 
  rule <ik> . => analysis </ik>
 	<basicBlocks> BBls:Bag </basicBlocks>
-	( . => <invocation> <variables> .Map </variables> <k> BBls </k> </invocation>)
+	( . => <invocation> <variables> .Map </variables> <body> BBls </body> </invocation>)
 
 /*@ \subsection{Gathering Constraints}
 ...*/
@@ -159,20 +155,20 @@ syntax K ::= "wrappedList" "(" Bag ")"
 //@ Phi functions
 
  rule <invocation>... 
-	<block>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</block>
+	<k>  V1:#Int =phi( P:Params )  =>  V1 = phiphi(P) ...</k>
 	<variables> . => v V1 |-> NP  ...</variables>
 	...</invocation>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
 
  rule <invocation>... 
-	<block>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</block>
+	<k>  V1 =phiphi( V2:#Int, P )  =>  V1 = phiphi(P) ...</k>
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<copy>... P2 |-> wrappedList ( <cenvs> ( . => SetItem ( P1 ) ) RestSet:Set </cenvs> ) ...</copy>
 	when notBool(P1 in RestSet)
 
  rule <invocation>... 
-	<block>  V1 =phiphi( V2, P )  =>  V1 = phiphi(P) ...</block>
+	<k>  V1 =phiphi( V2, P )  =>  V1 = phiphi(P) ...</k>
 	<variables>... v V1 |-> P1:#Int _:Map v V2 |-> P2:#Int ...</variables>
 	...</invocation>
 	<copy> ( . =>  P2 |-> wrappedList ( <cenvs> SetItem( P1 ) </cenvs> ) ) Rest </copy>
@@ -180,7 +176,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
 	
 
  rule <invocation>... 
-	<block>  V1 =phi( ) =>  . ...</block>
+	<k>  V1 =phi( ) =>  . ...</k>
 	...</invocation>
 
 //@ Get field
@@ -188,7 +184,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
  syntax FieldToPointer ::= "(" FieldReference "|>" #Int ")"
  // 
   rule <invocation>... 
-  	<block>   V1 = getfield F:FieldReference V2 =>  . ...</block>
+  	<k>   V1 = getfield F:FieldReference V2 =>  . ...</k>
   	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
   	...</invocation>
   	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
@@ -196,7 +192,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
   	when notBool(P2 in keys(Rest)) 
   
   rule <invocation>... 
-  	<block>   V1 = getfield F V2 =>  . ...</block>
+  	<k>   V1 = getfield F V2 =>  . ...</k>
   	<variables> ( . => v V1 |-> NP ) _:Map v V2 |-> P2 ...</variables>
   	...</invocation>
   	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
@@ -205,7 +201,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
 //@ Put field 
 
  rule <invocation>... 
- 	<block>  (putfield V1 = V2:#Int F:FieldReference =>  .) ...</block>
+ 	<k>  (putfield V1 = V2:#Int F:FieldReference =>  .) ...</k>
  	<variables> ... v V1 |-> P1:#Int  _:Map v V2 |-> P2:#Int ...</variables>
  	...</invocation>
  	<fieldWrite> ( . => P1 |-> wrappedList ( <cenvs> SetItem( ( F |> P2 ) ) </cenvs> ) ) Rest:Map </fieldWrite>
@@ -215,7 +211,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
  	when notBool(P1 in keys(Rest)) 
 
  rule <invocation>... 
-   	<block>   putfield V1 = V2 F =>  . ...</block>
+   	<k>   putfield V1 = V2 F =>  . ...</k>
      <variables> ... v V1 |-> P1  _:Map v V2 |-> P2 ...</variables>
      ...</invocation>
      <fieldWrite>... P1 |-> wrappedList ( <cenvs> ( . => SetItem(  ( F |> P2 ) ) ) RestSet </cenvs> ) ...</fieldWrite>
@@ -226,7 +222,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
 //@ New instruction
 
  rule <invocation>... 	
-	<block>   V1:#Int = new TR:TypeReference @ _:#Int =>  . ...</block>
+	<k>   V1:#Int = new TR:TypeReference @ _:#Int =>  . ...</k>
 	<variables>  ( . => v V1 |-> NP ) ...</variables>
 	...</invocation>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
