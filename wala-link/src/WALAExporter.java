@@ -18,6 +18,9 @@ import com.ibm.wala.ssa.SSACFG;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAOptions;
 import com.ibm.wala.types.ClassLoaderReference;
+import com.ibm.wala.types.Descriptor;
+import com.ibm.wala.types.Selector;
+import com.ibm.wala.types.TypeName;
 
 public class WALAExporter {
 	private static IRFactory<IMethod> irFactory;
@@ -31,19 +34,48 @@ public class WALAExporter {
 
 			IClassLoader appLoader = cha
 					.getLoader(ClassLoaderReference.Application);
+
 			Iterator<IClass> iterateAllClasses = appLoader.iterateAllClasses();
+
+			StringBuffer output = new StringBuffer();
 
 			while (iterateAllClasses.hasNext()) {
 				IClass iClass = (IClass) iterateAllClasses.next();
-				System.out.println(iClass);
 				Collection<IMethod> declaredMethods = iClass
 						.getDeclaredMethods();
 				for (IMethod m : declaredMethods) {
-					System.out.println(m);
+					Selector selector = m.getSelector();
+					Descriptor descriptor = selector.getDescriptor();
+					String descriptorOutput = "";
+					if (descriptor.getNumberOfParameters() > 0) {
+						for (TypeName typeName : descriptor.getParameters()) {
+							descriptorOutput += typeName.toString() + ",";
+						}
+						descriptorOutput = descriptorOutput
+								.substring(0,descriptorOutput.length() - 1);
+					}
+					descriptorOutput = "(" + descriptorOutput + ")" + descriptor.getReturnType();
+					String selectorOutput = selector.getName().toString()
+							+ descriptorOutput;
+					String mOutput = "< "
+							+ m.getDeclaringClass().getClassLoader().getName()
+							+ ", " + m.getDeclaringClass().getName() + ", "
+							+ selectorOutput + " >";
+					output.append(mOutput + " { \n");
 					irFactory = new DefaultIRFactory();
-					outputMethod(m);
+
+					outputMethod(output, m);
+					output.append("} andherecomesanothermethod \n");
 				}
 			}
+
+			output.delete(
+					output.length() - "andherecomesanothermethod".length() - 2,
+					output.length() - 1);
+			String theOutput = output.toString();
+			theOutput = theOutput.replace('[', 'A');
+			theOutput = theOutput.replace("String", "SString");
+			System.out.println(theOutput);
 		} catch (ClassHierarchyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,24 +88,23 @@ public class WALAExporter {
 		}
 	}
 
-	private static void outputMethod(IMethod m) {
-		IR ir = irFactory.makeIR(m, null,
-				SSAOptions.defaultOptions());
+	private static void outputMethod(StringBuffer output, IMethod m) {
+		IR ir = irFactory.makeIR(m, null, SSAOptions.defaultOptions());
 		SSACFG cfg = ir.getControlFlowGraph();
 		for (ISSABasicBlock bb : cfg) {
-			System.out.println("BB" + bb.getNumber() + ": {");
+			output.append("\tBB" + bb.getNumber() + ": { \n");
 			for (SSAInstruction i : bb)
-				System.out.println(i + ";");
-			System.out.println("}");
+				output.append("\t" + i + ";\n");
+			if (output.charAt(output.length() - 2) == ';')
+				output.deleteCharAt(output.length() - 2);
+			output.append("\t}\n");
 		}
 		for (ISSABasicBlock bb : cfg) {
-			Iterator<ISSABasicBlock> succNodes = cfg
-					.getSuccNodes(bb);
+			Iterator<ISSABasicBlock> succNodes = cfg.getSuccNodes(bb);
 			while (succNodes.hasNext()) {
-				ISSABasicBlock sbb = (ISSABasicBlock) succNodes
-						.next();
-				System.out.println("BB" + bb.getNumber() + "->"
-						+ "BB" + sbb.getNumber() + ";");
+				ISSABasicBlock sbb = (ISSABasicBlock) succNodes.next();
+				output.append("\tBB" + bb.getNumber() + "->" + "BB"
+						+ sbb.getNumber() + ";\n");
 			}
 		}
 	}

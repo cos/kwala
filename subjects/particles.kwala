@@ -1,38 +1,79 @@
-start
+< Application, Lparticles/Particle, <init>()V > { 
+	BB0: { 
+	}
+	BB1: { 
+	invokespecial < Application, Ljava/lang/Object, <init>()V > 1 @1 exception:3
+	}
+	BB2: { 
+	return
+	}
+	BB3: { 
+	}
+	BB0->BB1;
+	BB1->BB2;
+	BB1->BB3;
+	BB2->BB3;
+} andherecomesanothermethod 
+< Application, Lparticles/Particle, foo()V > { 
+	BB0: { 
+	}
+	BB1: { 
+	3 = new <Application,Lparticles/Particle>@0
+	}
+	BB2: { 
+	invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4
+	}
+	BB3: { 
+	5 = new <Application,Lparticles/Particle>@8
+	}
+	BB4: { 
+	invokespecial < Application, Lparticles/Particle, <init>()V > 5 @12 exception:6
+	}
+	BB5: { 
+	putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >
+	}
+	BB6: { 
+	return
+	}
+	BB7: { 
+	}
+	BB0->BB1;
+	BB1->BB2;
+	BB1->BB7;
+	BB2->BB3;
+	BB2->BB7;
+	BB3->BB4;
+	BB3->BB7;
+	BB4->BB5;
+	BB4->BB7;
+	BB5->BB6;
+	BB5->BB7;
+	BB6->BB7;
+} andherecomesanothermethod 
+< Application, Lparticles/Particle, main(ALjava/lang/SString)V > { 
+	BB0: { 
+	}
+	BB1: { 
+	3 = new <Application,Lparticles/Particle>@0
+	}
+	BB2: { 
+	invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4
+	}
+	BB3: { 
+	invokespecial < Application, Lparticles/Particle, foo()V > 3 @9 exception:5
+	}
+	BB4: { 
+	return
+	}
+	BB5: { 
+	}
+	BB0->BB1;
+	BB1->BB2;
+	BB1->BB5;
+	BB2->BB3;
+	BB2->BB5;
+	BB3->BB4;
+	BB3->BB5;
+	BB4->BB5;
+} 
 
-
-BB0: {
-}
-BB1: {
-3 = new <Application,Lparticles/Particle>@0
-}
-BB2: {
-invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4
-}
-BB3: {
-5 = new <Application,Lparticles/Particle>@8
-}
-BB4: {
-invokespecial < Application, Lparticles/Particle, <init>()V > 5 @12 exception:6
-}
-BB5: {
-putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >;
-6 = getfield < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> > 3
-}
-BB6: {
-return
-}
-BB7: {
-}
-BB0->BB1;
-BB1->BB2;
-BB1->BB7;
-BB2->BB3;
-BB2->BB7;
-BB3->BB4;
-BB3->BB7;
-BB4->BB5;
-BB4->BB7;
-BB5->BB6;
-BB5->BB7;
-BB6->BB7;

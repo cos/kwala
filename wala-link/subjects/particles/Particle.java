@@ -6,4 +6,9 @@ public class Particle {
 		Particle q = new Particle();
 		p.next = q;
 	}
+	
+	public static void main(String[] args) {
+		Particle p = new Particle();
+		p.foo();
+	}
 }

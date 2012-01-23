@@ -6,31 +6,36 @@ module KWALA-SYNTAX
 	//convert class names to start with lower case or '
 
  syntax Variable ::= #Int		
- syntax VariableName ::= "v" #Int						[:prec(20):]
+ syntax VariableName ::= "v" #Int												[:prec(20):]
 
- syntax Selector ::= "<" "init" ">" "(" ")" "V"					[:prec(40):]
+ syntax MethodName ::= "<" "init" ">" | #Id
+
+// [Ljava/lang/String;
+
+ syntax FormalParams ::= List{TypeName,","}
+ syntax Selector ::= MethodName "(" FormalParams ")" "V"						[:prec(40):]
  syntax TypeName ::= #Id				
 			| #Id "/" TypeName					[:prec(33):]
 // syntax TypeName ::= "L" TypeNameBase						[:prec(33):]
 //			| "A" TypeNameBase
 	//put A instead of [
- syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(41):]
+ syntax TypeReference ::= "<" #Id "," TypeName ">"								[:prec(41):]
  syntax FieldReference ::= "<" #Id "," TypeName "," #Id "," TypeReference ">"	[:prec(50):]
- syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"		[:prec(51):]
+ syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"				[:prec(51):]
 
  syntax Params ::= List{Variable,","}
 	//put , instead of space
- syntax NewInstructionBase ::= Variable "=" "new" TypeReference "@" #Int 	[:prec(70):]
- syntax NewInstruction ::= NewInstructionBase 					[:prec(71):]
-			| NewInstructionBase "(" Params ")" 			[:prec(72):]
- syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 	[:prec(73):]
+ syntax NewInstructionBase ::= Variable "=" "new" TypeReference "@" #Int 		[:prec(70):]
+ syntax NewInstruction ::= NewInstructionBase 									[:prec(71):]
+			| NewInstructionBase "(" Params ")" 								[:prec(72):]
+ syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 		[:prec(73):]
 // meaning: Var1 = gf F Var2 <=> Var1 = Var2 . F
-			| Variable "=" "getstatic" FieldReference		[:prec(74):]
- syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference	[:prec(75):]
+			| Variable "=" "getstatic" FieldReference							[:prec(74):]
+ syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference		[:prec(75):]
 // meaning: pf Var1 = Var2 F <=> Var1 . F = Var2
-			| "putstatic" Variable FieldReference			[:prec(76):]
- syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 			[:prec(77):]
- syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 		[:prec(78):]
+			| "putstatic" Variable FieldReference								[:prec(76):]
+ syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 					[:prec(77):]
+ syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 				[:prec(78):]
 	//put param list in ()
 // syntax InvokeSpecialWord ::= "invokespecial"  
 //				| "invokestatic"
@@ -44,7 +49,6 @@ module KWALA-SYNTAX
 			| "return"
 			| InvokeSpecialInstruction
 			| "noinstruction"
-			| "main"
 
 
  syntax BBEdge ::= #Id "->" #Id ";"						[:prec(80):]
@@ -57,13 +61,23 @@ module KWALA-SYNTAX
 
  syntax TaskUnit ::= BBEdge
 		| Block
-		| "start"
-		| "analysis"
-		| "done"
 
  syntax Task ::= TaskUnit
-		| Task  Task							[:prec(100) gather(E e):]
+		| Task  Task							[:prec(96) gather(E e):]
 // syntax Task ::= List{TaskUnit,";"}						[:prec(100):] 
+
+ syntax Program ::= MethodDefinition 
+			| "start"
+			| "analysis"
+			| "done"			
+			| Program "andherecomesanothermethod" Program	[:prec(98) gather(E e):]
+ syntax MethodDefinition ::= MethodReference "{" Task "}"	[:prec(97):]
+ // syntax ClassBody ::= MethodDefinition
+ 				// | ClassBody ClassBody	[:prec(98) gather(E e):]
+
+// syntax ClassDefinition ::= TypeReference "{{" ClassBody "}}" [:prec(99):]
+// syntax TopTask ::= ClassDefinition
+			// | TopTask TopTask								[:prec(100) gather(E e):]
 
 end module
 
@@ -76,8 +90,8 @@ module KWALA
 /*@ \subsection{Configuration}
 ...*/
  configuration <T color="gray">
-		<class multiplicity="*" color="white"> 	
-		  <className color="cyan"> object </className>
+		// <class multiplicity="*" color="white"> 	
+		  // <className color="cyan"> object </className>
 		  <method multiplicity="*" color="yellow">
 			  <methodName color="red"> null </methodName>
 			  <edges color="orange"> .List </edges>
@@ -88,7 +102,7 @@ module KWALA
 			   </basicBlock>
 			  </basicBlocks>
 		  </method>
-		 </class>
+		 // </class>
 		 @latex("\\kBR")
 		<cenvs multiplicity="*"> .Set </cenvs>
 		<invocations color="blue">
@@ -138,9 +152,9 @@ module KWALA
 	<method> (. =>  <basicBlock> <blockName> BB </blockName> <k> noinstruction </k></basicBlock>) ...</method>
 
  rule <ik> start => . ...</ik>
-	( . => <class> <className> "blah" </className> <method> <methodName> "blahah" </methodName> <edges> .List </edges> 
-	 <basicBlocks> .Bag </basicBlocks>
-	 </method> </class>)
+	// ( . => <class> <className> "blah" </className> <method> <methodName> "blahah" </methodName> <edges> .List </edges> 
+	 // <basicBlocks> .Bag </basicBlocks>
+	 // </method> </class>)
 
  rule <ik> . => analysis </ik>
 	<basicBlocks> BBls:Bag </basicBlocks>
