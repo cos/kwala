@@ -70,8 +70,8 @@ module KWALA-SYNTAX
 			| "start"
 			| "analysis"
 			| "done"			
-			| Program "andherecomesanothermethod" Program	[:prec(98) gather(E e):]
- syntax MethodDefinition ::= MethodReference "{" Task "}"	[:prec(97):]
+			| Program "+++" Program					[:prec(98) gather(E e):]
+ syntax MethodDefinition ::= MethodReference "{" Task "}"			[:prec(97):]
  // syntax ClassBody ::= MethodDefinition
  				// | ClassBody ClassBody	[:prec(98) gather(E e):]
 
@@ -141,6 +141,7 @@ module KWALA
 ...*/
  rule T1:TaskUnit T2:Task => T1 ~> T2
  rule I1:Instruction ; BBl2:BlockBody => I1 ~> BBl2
+ rule Pg1:Program +++ Pg2:Program => Pg1 ~> Pg2
 
  syntax ListItem ::= "[" #Id "," #Id "]"
  rule <ik> BB1:#Id -> BB2:#Id ; => . ...</ik>

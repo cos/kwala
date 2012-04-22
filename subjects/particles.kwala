@@ -1,3 +1,5 @@
+start
++++ 
 < Application, Lparticles/Particle, <init>()V > { 
 	BB0: { 
 	}
@@ -13,7 +15,8 @@
 	BB1->BB2;
 	BB1->BB3;
 	BB2->BB3;
-} andherecomesanothermethod 
+} 
++++ 
 < Application, Lparticles/Particle, foo()V > { 
 	BB0: { 
 	}
@@ -49,7 +52,8 @@
 	BB5->BB6;
 	BB5->BB7;
 	BB6->BB7;
-} andherecomesanothermethod 
+} 
++++  
 < Application, Lparticles/Particle, main(ALjava/lang/SString)V > { 
 	BB0: { 
 	}
