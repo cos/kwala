@@ -2,8 +2,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import sabazios.wala.ScopeBuilder;
-
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
 import com.ibm.wala.classLoader.IMethod;
@@ -25,11 +23,18 @@ import com.ibm.wala.types.TypeName;
 public class WALAExporter {
 	private static IRFactory<IMethod> irFactory;
 
-	public static void main(String[] args) {
-		ScopeBuilder sb = new ScopeBuilder();
+	public static void main(String[] args) throws IllegalArgumentException, IOException {
+
+		String jkdlib;
+		if (System.getProperty("os.name").contains("Linux"))
+			jkdlib = "/usr/lib/jvm/java-6-sun-1.6.0.26/jre/lib/rt.jar";
+		else
+			jkdlib = "/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar";
+
+		AnalysisScopeBuilder sb = new AnalysisScopeBuilder(jkdlib);
 		sb.addBinaryDependency("particles");
 		try {
-			AnalysisScope scope = sb.getScope();
+			AnalysisScope scope = sb.getAnalysisScope();
 			ClassHierarchy cha = ClassHierarchy.make(scope);
 
 			IClassLoader appLoader = cha
@@ -51,10 +56,11 @@ public class WALAExporter {
 						for (TypeName typeName : descriptor.getParameters()) {
 							descriptorOutput += typeName.toString() + ",";
 						}
-						descriptorOutput = descriptorOutput
-								.substring(0,descriptorOutput.length() - 1);
+						descriptorOutput = descriptorOutput.substring(0,
+								descriptorOutput.length() - 1);
 					}
-					descriptorOutput = "(" + descriptorOutput + ")" + descriptor.getReturnType();
+					descriptorOutput = "(" + descriptorOutput + ")"
+							+ descriptor.getReturnType();
 					String selectorOutput = selector.getName().toString()
 							+ descriptorOutput;
 					String mOutput = "< "
@@ -65,12 +71,12 @@ public class WALAExporter {
 					irFactory = new DefaultIRFactory();
 
 					outputMethod(output, m);
-					output.append("} andherecomesanothermethod \n");
+					output.append("} +++ \n");
 				}
 			}
 
 			output.delete(
-					output.length() - "andherecomesanothermethod".length() - 2,
+					output.length() - "+++".length() - 2,
 					output.length() - 1);
 			String theOutput = output.toString();
 			theOutput = theOutput.replace('[', 'A');
