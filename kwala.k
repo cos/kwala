@@ -24,8 +24,9 @@ module KWALA-SYNTAX
  syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(41):]
  syntax FieldReference ::= "<" #Id "," TypeName "," #Id "," TypeReference ">"	[:prec(50):]
 //note: originally <...> but it seems to the parser this clashes with the cell(?) syntax
- syntax MethodReference ::= "<|" #Id "," TypeName "," Selector "|>"		[:prec(51):]
+ syntax MethodReference ::= "<|" #Id "," TypeName "," Selector "|>" 		[:prec(51):]
 			| "none"
+ syntax MethodDeclaration ::= MethodReference "[|" Params "|]"			[:prec(52):]
 
  syntax Params ::= List{Variable,","}
 	//put , instead of space
@@ -75,7 +76,7 @@ module KWALA-SYNTAX
 			| "analysis"
 			| "done"			
 			| Program "+++" Program					[:prec(98) gather(E e):]
- syntax MethodDefinition ::= MethodReference "{" Task "}"			[:prec(97):]
+ syntax MethodDefinition ::= MethodDeclaration "{" Task "}"			[:prec(97):]
  // syntax ClassBody ::= MethodDefinition
  				// | ClassBody ClassBody	[:prec(98) gather(E e):]
 
@@ -96,6 +97,7 @@ module KWALA
  configuration <T color="gray">
 		  <method multiplicity="*" color="yellow">
 			  <methodName color="red"> none </methodName>
+			  <methodParams color="purple"> .List </methodParams>
 			  <edges color="orange"> .List </edges>
 			  <basicBlocks color="yellow">
 		  	   <basicBlock multiplicity="*" color="brown">
@@ -170,24 +172,23 @@ module KWALA
 		...</basicBlocks> 		
 	...</method>
 
- rule  <ik> ( MR1:MethodReference { T2 } => T2 ) ...</ik>
+ rule  <ik> ( MR1:MethodReference [| P:Params |] { T2 } => T2 ) ...</ik>
 	<mname> _ => MR1 </mname> 
 	 (. => <method> 
 		<methodName> MR1 </methodName> 
+		<methodParams> .List </methodParams>
 		<edges> .List </edges> 
 		<basicBlocks> .Bag </basicBlocks>  
 	</method>) 
 	
-rule  <ik> start => . ...</ik>
+ rule  <ik> start => . ...</ik>
 
  rule <ik> . => analysis </ik>
-//	<mname> _ => "<" Ap1 "," TN1 "," "main" "(" FP1 ")" "V" ">" </mname>
 	<mname> _ => none </mname>
-	<method>
+	(<method>
 		<methodName> <| Ap1:#Id , TN1:TypeName , main [ FP1:FormalParams ] |> </methodName>
-//		<methodName> <| Ap1:#Id , TN1:TypeName , Sl1:Selector |> </methodName>
 		<basicBlocks> BBls:Bag</basicBlocks>
-	...</method> 
+	...</method> => .)
 	( . => <invocation> <variables> .Map </variables> <body> BBls </body> </invocation>)
 
 /*@ \subsection{Gathering Constraints}
@@ -273,6 +274,26 @@ syntax K ::= "wrappedList" "(" Bag ")"
 	<nextObject> NO:#Int => NO +Int 1 </nextObject>
 	<pointsTo> . => NP |-> wrappedList ( <cenvs> SetItem ( NO ) </cenvs> ) ...</pointsTo>
 	<objects>(. => <object> <name> NO </name> <fields> .Map </fields> </object>) ...</objects>
+
+//@ Invocation
+
+  rule <invocation>... 	
+	<k>   V1:#Int = new TR:TypeReference @ _:#Int =>  . ...</k>
+	<variables>  ( . => v V1 |-> NP ) ...</variables>
+	...</invocation>
+	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
+	<nextObject> NO:#Int => NO +Int 1 </nextObject>
+	<pointsTo> . => NP |-> wrappedList ( <cenvs> SetItem ( NO ) </cenvs> ) ...</pointsTo>
+	<objects>(. => <object> <name> NO </name> <fields> .Map </fields> </object>) ...</objects>
+
+
+<ik> . => analysis </ik>
+	<mname> _ => none </mname>
+	(<method>
+		<methodName> <| Ap1:#Id , TN1:TypeName , main [ FP1:FormalParams ] |> </methodName>
+		<basicBlocks> BBls:Bag</basicBlocks>
+	...</method> => .)
+	( . => <invocation> <variables> .Map </variables> <body> BBls </body> </invocation>) 
 
 /*@ \subsection{Resolving Constraints}*/
 
