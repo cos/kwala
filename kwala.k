@@ -3,6 +3,8 @@ module KWALA-SYNTAX
 ...*/
  syntax #Id ::= object
 		| null
+		| on
+		| off
 	//convert class names to start with lower case or '
 
  syntax Variable ::= #Int		
@@ -44,7 +46,7 @@ module KWALA-SYNTAX
 	//put param list in ()
 // syntax InvokeSpecialWord ::= "invokespecial"  
 //				| "invokestatic"
- syntax InvokeSpecialInstruction ::= "invokespecial" MethodReference Params "@" #Int "exception" ":" Variable	[:prec(79):]
+ syntax InvokeSpecialInstruction ::= "invokespecial" MethodReference Params 			[:prec(79):]
 
  syntax Instruction ::= NewInstruction
 			| GetInstruction
@@ -97,6 +99,7 @@ module KWALA
  configuration <T color="gray">
 		  <method multiplicity="*" color="yellow">
 			  <methodName color="red"> none </methodName>
+			  <lock> off </lock>
 			  <methodParams color="purple"> .List </methodParams>
 			  <edges color="orange"> .List </edges>
 			  <basicBlocks color="yellow">
@@ -111,6 +114,10 @@ module KWALA
 		<invocations color="blue">
 		 <invocation multiplicity="*"  color="brown">
 			<variables color="red" > .Map </variables>
+			<methodName color="yellow"> none </methodName>
+			<formals> .List </formals>	
+	                <lock> off </lock>
+			<workList> .Params </workList>
 			<body color="white"> 
 		 	   <basicBlock multiplicity="*" color="brown">
 				<blockName color="gray"> null </blockName>
@@ -172,11 +179,12 @@ module KWALA
 		...</basicBlocks> 		
 	...</method>
 
- rule  <ik> ( MR1:MethodReference [| P:Params |] { T2 } => T2 ) ...</ik>
+ rule  <ik> ( MR1:MethodReference [| PMS:Params |] { T2 } => T2 ) ...</ik>
 	<mname> _ => MR1 </mname> 
 	 (. => <method> 
-		<methodName> MR1 </methodName> 
-		<methodParams> .List </methodParams>
+		<methodName> MR1 </methodName>
+		<lock> off </lock> 
+		<methodParams> PMS </methodParams>
 		<edges> .List </edges> 
 		<basicBlocks> .Bag </basicBlocks>  
 	</method>) 
@@ -189,7 +197,14 @@ module KWALA
 		<methodName> <| Ap1:#Id , TN1:TypeName , main [ FP1:FormalParams ] |> </methodName>
 		<basicBlocks> BBls:Bag</basicBlocks>
 	...</method> => .)
-	( . => <invocation> <variables> .Map </variables> <body> BBls </body> </invocation>)
+	( . => <invocation> 
+		<variables> .Map </variables> 
+		<methodName> main </methodName> 
+		<formals> .List </formals> 
+		<workList> .List </workList>
+		<lock> off </lock>
+		<body> BBls </body> 
+	</invocation>)
 
 /*@ \subsection{Gathering Constraints}
 ...*/
@@ -277,23 +292,86 @@ syntax K ::= "wrappedList" "(" Bag ")"
 
 //@ Invocation
 
-  rule <invocation>... 	
-	<k>   V1:#Int = new TR:TypeReference @ _:#Int =>  . ...</k>
-	<variables>  ( . => v V1 |-> NP ) ...</variables>
+//@ Never seen before: look for it in <methods/>
+
+  rule <invocation> 
+	<k> invokespecial MR1:MethodReference PMS:Params ...</k>
 	...</invocation>
+	<method> 
+		<methodName> MR1 </methodName>
+		<methodParams> FPMS:Params </methodParams>
+		<lock> off => on </lock>
+		<basicBlocks> BBls:Bag </basicBlocks>
+	...</method>
+	(. => <invocation> 
+		<methodName> MR1 </methodName>
+		<variables> .Map </variables>
+		<lock> on </lock>
+		<formals> FPMS </formals>
+		<workList> .Params </workList>	
+		<body> BBls </body>
+		...</invocation>)
+	
+   rule <method> 
+		<methodName> MR1 </methodName>
+		<methodParams> ( V1 , FPMS ) => FPMS </methodParams>
+		<lock> on </lock>
+	...</method>
 	<nextPointer> NP:#Int => NP +Int 1 </nextPointer>
-	<nextObject> NO:#Int => NO +Int 1 </nextObject>
-	<pointsTo> . => NP |-> wrappedList ( <cenvs> SetItem ( NO ) </cenvs> ) ...</pointsTo>
-	<objects>(. => <object> <name> NO </name> <fields> .Map </fields> </object>) ...</objects>
+	<invocation> 
+		<methodName> MR1 </methodName>
+		<lock> on </lock>
+		<variables> ( . => v V1 |-> NP ) ...</variables>
+	...</invocation>
 
-
-<ik> . => analysis </ik>
-	<mname> _ => none </mname>
-	(<method>
-		<methodName> <| Ap1:#Id , TN1:TypeName , main [ FP1:FormalParams ] |> </methodName>
-		<basicBlocks> BBls:Bag</basicBlocks>
+  rule (<method> 
+		<methodName> MR1 </methodName>
+		<methodParams> . </methodParams>
+		<lock> on </lock>
 	...</method> => .)
-	( . => <invocation> <variables> .Map </variables> <body> BBls </body> </invocation>) 
+	<invocation>
+		<methodName> MR1 </methodName>
+		<lock> on => off </lock>
+	...</invocation>
+ 
+//@ Seen before: look for it in <invocations/>
+
+ rule <invocation> 
+	<k> invokespecial MR1:MethodReference PMS:Params => . ...</k>
+	<workList> . => FPMS </workList>
+	...</invocation>
+	<invocation>
+		<methodName> MR1 </methodName>
+		<formals> FPMS </formals>
+	...</invocation>
+
+ rule <invocation>
+		<variables>... v V2 |-> P2 ...</variables>
+		<k> invokespecial MR1:MethodReference ( V2, PMS ) => . ...</k>
+		<workList> ( V1 , FPMS ) => FPMS </workList>
+	...</invocation>
+	<invocation>
+		<methodName> MR1 </methodName>
+		<variables>... v V1 |-> P1 ...</variables>
+	...</invocation>
+	<copy>... P2 |-> wrappedList ( <cenvs> ( . => SetItem ( P1 ) ) RestSet </cenvs> )  ...</copy>
+	when notBool(P1 in RestSet)
+
+ rule <invocation>
+		<variables>... v V2 |-> P2 ...</variables>
+		<k> invokespecial MR1:MethodReference ( V2, PMS ) => . ...</k>
+		<workList> ( V1 , FPMS ) => FPMS </workList>
+	...</invocation>
+	<invocation>
+		<methodName> MR1 </methodName>
+		<variables>... v V1 |-> P1 ...</variables>
+	...</invocation>
+	<copy> ( . => P2 |-> wrappedList ( <cenvs> SetItem ( P1 ) </cenvs> ) ) Rest </copy>
+	when notBool(P2 in keys(Rest))
+
+ rule <invocation> 
+	<k> invokespecial _:MethodReference . => . ...</k>
+	...</invocation>
 
 /*@ \subsection{Resolving Constraints}*/
 
