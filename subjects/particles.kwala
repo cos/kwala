@@ -1,10 +1,10 @@
 start
 +++ 
-< Application, Lparticles/Particle, <init>()V > { 
+<| Application, Lparticles/Particle, <init>[] |> { 
 	BB0: { 
 	}
 	BB1: { 
-	invokespecial < Application, Ljava/lang/Object, <init>()V > 1 @1 exception:3
+	invokespecial <| Application, Ljava/lang/Object, <init>[] |> 1 @1 exception:3
 	}
 	BB2: { 
 	return
@@ -17,20 +17,20 @@ start
 	BB2->BB3;
 } 
 +++ 
-< Application, Lparticles/Particle, foo()V > { 
+<| Application, Lparticles/Particle, foo[] |> { 
 	BB0: { 
 	}
 	BB1: { 
 	3 = new <Application,Lparticles/Particle>@0
 	}
 	BB2: { 
-	invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4
+	invokespecial <| Application, Lparticles/Particle, <init>[] |> 3 @4 exception:4
 	}
 	BB3: { 
 	5 = new <Application,Lparticles/Particle>@8
 	}
 	BB4: { 
-	invokespecial < Application, Lparticles/Particle, <init>()V > 5 @12 exception:6
+	invokespecial <| Application, Lparticles/Particle, <init>[] |> 5 @12 exception:6
 	}
 	BB5: { 
 	putfield 3 = 5 < Application, Lparticles/Particle, next, <Application,Lparticles/Particle> >
@@ -54,17 +54,17 @@ start
 	BB6->BB7;
 } 
 +++  
-< Application, Lparticles/Particle, main(ALjava/lang/SString)V > { 
+<| Application, Lparticles/Particle, main[ALjava/lang/SString] |> { 
 	BB0: { 
 	}
 	BB1: { 
 	3 = new <Application,Lparticles/Particle>@0
 	}
 	BB2: { 
-	invokespecial < Application, Lparticles/Particle, <init>()V > 3 @4 exception:4
+	invokespecial <| Application, Lparticles/Particle, <init>[] |> 3 @4 exception:4
 	}
 	BB3: { 
-	invokespecial < Application, Lparticles/Particle, foo()V > 3 @9 exception:5
+	invokespecial <| Application, Lparticles/Particle, foo[] |> 3 @9 exception:5
 	}
 	BB4: { 
 	return

@@ -6,34 +6,38 @@ module KWALA-SYNTAX
 	//convert class names to start with lower case or '
 
  syntax Variable ::= #Int		
- syntax VariableName ::= "v" #Int												[:prec(20):]
+ syntax VariableName ::= "v" #Int						[:prec(20):]
 
- syntax MethodName ::= "<" "init" ">" | #Id
+ syntax MethodName ::= "<" "init" ">" | #Id | "main"
 
 // [Ljava/lang/String;
 
  syntax FormalParams ::= List{TypeName,","}
- syntax Selector ::= MethodName "(" FormalParams ")" "V"						[:prec(40):]
+// note: change to "[" "]" if you want to look at the formal parameters
+// syntax Selector ::= MethodName "(" FormalParams ")" "V"			[:prec(40):]
+ syntax Selector ::= MethodName "[" FormalParams "]" 				[:prec(40):]
  syntax TypeName ::= #Id				
 			| #Id "/" TypeName					[:prec(33):]
 // syntax TypeName ::= "L" TypeNameBase						[:prec(33):]
 //			| "A" TypeNameBase
 	//put A instead of [
- syntax TypeReference ::= "<" #Id "," TypeName ">"								[:prec(41):]
+ syntax TypeReference ::= "<" #Id "," TypeName ">"				[:prec(41):]
  syntax FieldReference ::= "<" #Id "," TypeName "," #Id "," TypeReference ">"	[:prec(50):]
- syntax MethodReference ::= "<" #Id "," TypeName "," Selector ">"				[:prec(51):]
+//note: originally <...> but it seems to the parser this clashes with the cell(?) syntax
+ syntax MethodReference ::= "<|" #Id "," TypeName "," Selector "|>"		[:prec(51):]
+			| "none"
 
  syntax Params ::= List{Variable,","}
 	//put , instead of space
  syntax NewInstructionBase ::= Variable "=" "new" TypeReference "@" #Int 		[:prec(70):]
- syntax NewInstruction ::= NewInstructionBase 									[:prec(71):]
-			| NewInstructionBase "(" Params ")" 								[:prec(72):]
+ syntax NewInstruction ::= NewInstructionBase 						[:prec(71):]
+			| NewInstructionBase "(" Params ")" 				[:prec(72):]
  syntax GetInstruction ::= Variable "=" "getfield" FieldReference Variable 		[:prec(73):]
 // meaning: Var1 = gf F Var2 <=> Var1 = Var2 . F
-			| Variable "=" "getstatic" FieldReference							[:prec(74):]
+			| Variable "=" "getstatic" FieldReference			[:prec(74):]
  syntax PutInstruction ::= "putfield" Variable "=" Variable FieldReference		[:prec(75):]
 // meaning: pf Var1 = Var2 F <=> Var1 . F = Var2
-			| "putstatic" Variable FieldReference								[:prec(76):]
+			| "putstatic" Variable FieldReference					[:prec(76):]
  syntax PhiInstruction ::= Variable "=" "phi" "(" Params ")" 					[:prec(77):]
  syntax PhiPhiInstruction ::= Variable "=" "phiphi" "(" Params ")" 				[:prec(78):]
 	//put param list in ()
@@ -90,10 +94,8 @@ module KWALA
 /*@ \subsection{Configuration}
 ...*/
  configuration <T color="gray">
-		// <class multiplicity="*" color="white"> 	
-		  // <className color="cyan"> object </className>
 		  <method multiplicity="*" color="yellow">
-			  <methodName color="red"> null </methodName>
+			  <methodName color="red"> none </methodName>
 			  <edges color="orange"> .List </edges>
 			  <basicBlocks color="yellow">
 		  	   <basicBlock multiplicity="*" color="brown">
@@ -102,7 +104,6 @@ module KWALA
 			   </basicBlock>
 			  </basicBlocks>
 		  </method>
-		 // </class>
 		 @latex("\\kBR")
 		<cenvs multiplicity="*"> .Set </cenvs>
 		<invocations color="blue">
@@ -133,32 +134,60 @@ module KWALA
 		</objects>
 		 <task color="violet"> 
 			<ik color="white"> $PGM:K </ik>
+			<mname color="white"> "none" </mname>
 		 </task>
 		</T>
 
 
 /*@ \subsection{Processing Basic Blocks}
 ...*/
- rule T1:TaskUnit T2:Task => T1 ~> T2
- rule I1:Instruction ; BBl2:BlockBody => I1 ~> BBl2
+ rule  T1:TaskUnit T2:Task => T1 ~> T2 
+ rule  I1:Instruction ; BBl2:BlockBody => I1 ~> BBl2 
+// rule MR1:MethodReference { T2 } => MR1 ~> T2 
  rule Pg1:Program +++ Pg2:Program => Pg1 ~> Pg2
 
  syntax ListItem ::= "[" #Id "," #Id "]"
  rule <ik> BB1:#Id -> BB2:#Id ; => . ...</ik>
-      <edges> . => [BB1,BB2] ...</edges>
+	<mname> MR1 </mname> 
+	<method> 
+	      <methodName> MR1 </methodName>
+	      <edges> . => [BB1,BB2] ...</edges>
+	...</method>
  
  rule <ik> BB:#Id : { Bl:BlockBody }  => . ...</ik>
-	<method> (. =>  <basicBlock> <blockName> BB </blockName> <k> Bl </k></basicBlock>) ...</method>
- rule <ik> BB:#Id : { }  => . ...</ik>
-	<method> (. =>  <basicBlock> <blockName> BB </blockName> <k> noinstruction </k></basicBlock>) ...</method>
+	<mname> MR1 </mname>
+	<method>
+		<methodName> MR1 </methodName> 
+		(. =>  <basicBlock> <blockName> BB </blockName> <k> Bl </k></basicBlock>) 
+	...</method>
 
- rule <ik> start => . ...</ik>
-	// ( . => <class> <className> "blah" </className> <method> <methodName> "blahah" </methodName> <edges> .List </edges> 
-	 // <basicBlocks> .Bag </basicBlocks>
-	 // </method> </class>)
+ rule <ik> BB:#Id : { }  => . ...</ik>
+	<mname> MR1 </mname>
+	<method> 
+		<methodName> MR1 </methodName>
+		<basicBlocks> 
+			(. =>  <basicBlock> <blockName> BB </blockName> <k> noinstruction </k> </basicBlock>) 
+		...</basicBlocks> 		
+	...</method>
+
+ rule  <ik> ( MR1:MethodReference { T2 } => T2 ) ...</ik>
+	<mname> _ => MR1 </mname> 
+	 (. => <method> 
+		<methodName> MR1 </methodName> 
+		<edges> .List </edges> 
+		<basicBlocks> .Bag </basicBlocks>  
+	</method>) 
+	
+rule  <ik> start => . ...</ik>
 
  rule <ik> . => analysis </ik>
-	<basicBlocks> BBls:Bag </basicBlocks>
+//	<mname> _ => "<" Ap1 "," TN1 "," "main" "(" FP1 ")" "V" ">" </mname>
+	<mname> _ => none </mname>
+	<method>
+		<methodName> <| Ap1:#Id , TN1:TypeName , main [ FP1:FormalParams ] |> </methodName>
+//		<methodName> <| Ap1:#Id , TN1:TypeName , Sl1:Selector |> </methodName>
+		<basicBlocks> BBls:Bag</basicBlocks>
+	...</method> 
 	( . => <invocation> <variables> .Map </variables> <body> BBls </body> </invocation>)
 
 /*@ \subsection{Gathering Constraints}

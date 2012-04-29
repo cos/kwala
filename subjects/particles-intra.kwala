@@ -1,10 +1,10 @@
 start
 +++
-< Application, Lparticles/Particle, <init>()V > { 
+<| Application, Lparticles/Particle, <init>[] |> { 
 	BB0: { 
 	}
 	BB1: { 
-	invokespecial < Application, Ljava/lang/Object, <init>()V > 1 @1 exception:3
+	invokespecial <| Application, Ljava/lang/Object, <init>[] |> 1 @1 exception:3
 	}
 	BB2: { 
 	return
