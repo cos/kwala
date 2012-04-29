@@ -201,7 +201,7 @@ module KWALA
 		<variables> .Map </variables> 
 		<methodName> main </methodName> 
 		<formals> .List </formals> 
-		<workList> .List </workList>
+		<workList> .Params </workList>
 		<lock> off </lock>
 		<body> BBls </body> 
 	</invocation>)
@@ -326,7 +326,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
 
   rule (<method> 
 		<methodName> MR1 </methodName>
-		<methodParams> . </methodParams>
+		<methodParams> .Params </methodParams>
 		<lock> on </lock>
 	...</method> => .)
 	<invocation>
@@ -338,7 +338,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
 
  rule <invocation> 
 	<k> invokespecial MR1:MethodReference PMS:Params => . ...</k>
-	<workList> . => FPMS </workList>
+	<workList> .Params => FPMS </workList>
 	...</invocation>
 	<invocation>
 		<methodName> MR1 </methodName>
@@ -370,7 +370,7 @@ syntax K ::= "wrappedList" "(" Bag ")"
 	when notBool(P2 in keys(Rest))
 
  rule <invocation> 
-	<k> invokespecial _:MethodReference . => . ...</k>
+	<k> invokespecial _:MethodReference .Params => . ...</k>
 	...</invocation>
 
 /*@ \subsection{Resolving Constraints}*/
