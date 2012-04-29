@@ -1,6 +1,6 @@
 start
 +++
-<| Application, Lparticles/Particle, <init>[] |> { 
+<| Application, Lparticles/Particle, <init>[] |> [| 1 |] { 
 	BB0: { 
 	}
 	BB1: { 

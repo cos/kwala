@@ -1,6 +1,6 @@
 start
 +++ 
-<| Application, Lparticles/Particle, <init>[] |> { 
+<| Application, Lparticles/Particle, <init>[] |> [| 1 |] { 
 	BB0: { 
 	}
 	BB1: { 
@@ -17,7 +17,7 @@ start
 	BB2->BB3;
 } 
 +++ 
-<| Application, Lparticles/Particle, foo[] |> { 
+<| Application, Lparticles/Particle, foo[] |> [| 1 |] { 
 	BB0: { 
 	}
 	BB1: { 
@@ -54,7 +54,7 @@ start
 	BB6->BB7;
 } 
 +++  
-<| Application, Lparticles/Particle, main[ALjava/lang/SString] |> { 
+<| Application, Lparticles/Particle, main[ALjava/lang/SString] |> [| 1 |] { 
 	BB0: { 
 	}
 	BB1: { 
