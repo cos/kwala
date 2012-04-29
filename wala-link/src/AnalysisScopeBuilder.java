@@ -21,7 +21,7 @@ public class AnalysisScopeBuilder {
 	private AnalysisScope scope = AnalysisScope.createJavaAnalysisScope();;
 
 	public AnalysisScopeBuilder(String jreLibPath) throws IllegalArgumentException, IOException {
-		System.out.println(jreLibPath);
+		debug(jreLibPath);
 		scope.addToScope(scope.getLoader(AnalysisScope.PRIMORDIAL), new JarFile(jreLibPath));
 	}
 	
@@ -40,7 +40,7 @@ public class AnalysisScopeBuilder {
 	}
 
 	private void debug(String string) {
-		System.out.println(string);
+//		System.out.println(string);
 	}
 
 	private ClassLoader getLoader() {

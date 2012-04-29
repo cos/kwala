@@ -32,7 +32,7 @@ public class WALAExporter {
 			jkdlib = "/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar";
 
 		AnalysisScopeBuilder sb = new AnalysisScopeBuilder(jkdlib);
-		sb.addBinaryDependency("particles");
+		sb.addBinaryDependency(args[0]);
 		try {
 			AnalysisScope scope = sb.getAnalysisScope();
 			ClassHierarchy cha = ClassHierarchy.make(scope);
@@ -81,6 +81,7 @@ public class WALAExporter {
 			String theOutput = output.toString();
 			theOutput = theOutput.replace('[', 'A');
 			theOutput = theOutput.replace("String", "SString");
+			theOutput = "start\n+++\n" + theOutput;
 			System.out.println(theOutput);
 		} catch (ClassHierarchyException e) {
 			// TODO Auto-generated catch block
